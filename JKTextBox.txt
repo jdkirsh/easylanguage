@@ -1,0 +1,32 @@
+{
+Text_SetStyle
+
+Value1 = Text_SetStyle(Text_ID, Horiz, Vert);
+
+Value Placement
+0 To the right of the bar specified for the text object
+1 To the left of the bar specified for the text object
+2 Centered on the bar specified for the text object
+
+You can use one of three vertical placement values (Vert):
+
+Value Placement
+0 Beneath the price specified for the text object
+1 Above the price specified for the text object
+2 Centered on the specified price location of the text object 
+
+}
+
+using elsystem ;
+using elsystem.drawingobjects ;
+using elsystem.drawing ;
+
+
+If Time = 1200 then 
+begin
+	Value1 = dayofweek(date);
+	//Value2 = Text_New(date, time, Value1[0], "DOW: " + NumToStr(Value1[0],0));
+	Value2 = Text_New( date, time, High, "JK: " + NumToStr( Value1, 0 ) ) ; // Display day of week above the bar High
+	Text_SetColor(Value2, Yellow);
+	Text_SetStyle(Value2,1, 1);
+End; 
