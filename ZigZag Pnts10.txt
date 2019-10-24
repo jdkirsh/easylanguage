@@ -1,0 +1,94 @@
+{ Search Tag: WA-ZigZag Pnts }
+inputs: 
+	Price( Close ), 
+	RetracePnts( 5 ), 
+	LineColor( Yellow ), 
+	LineWidth( 1 ) ;
+
+variables: 
+	NewSwingPrice( 0 ), 
+	SwingPrice( Price ), { used as a convenient 2-element array }
+	SwingDate( Date ), { used as a convenient 2-element array }
+	SwingTime( Time ), { used as a convenient 2-element array }
+	TLDir( 0 ), { TLDir = -1 implies prev TL dn, +1 implies prev TL up }
+	SaveSwing( false ), 
+	AddTL( false ), 
+	UpdateTL( false ), 
+	TLRef( 0 ) ;
+
+if BarType = 14 and BarInterval < 60 then
+	RaiseRuntimeError( "This study cannot currently be applied to second bars " +
+     "with an interval of less than 60 seconds." ) ;
+	
+{ Candidate swings are just-confirmed, 3-bar (Str=1), SwingHi's and SwingLo's }
+
+NewSwingPrice = SwingHigh( 1, Price, 1, 2 ) ;
+if NewSwingPrice  <> -1 then 
+	begin
+	if TLDir <= 0 and NewSwingPrice >= SwingPrice + RetracePnts then 
+		{ prepare to add new up TL }
+		begin
+		SaveSwing = true ;
+		AddTL = true ;
+		TLDir = 1 ;
+		end 
+	else if TLDir = 1 and NewSwingPrice >= SwingPrice then 
+		{ prepare to update prev up TL }
+		begin
+		SaveSwing = true ;
+		UpdateTL = true ;
+		end ;
+	end 
+else 
+	begin
+	NewSwingPrice = SwingLow( 1, Price, 1, 2 ) ;
+	if NewSwingPrice <> -1 then 
+		begin
+		if TLDir >= 0 and NewSwingPrice <= SwingPrice - RetracePnts then 
+			{ prepare to add new dn TL }
+			begin
+			SaveSwing = true ;
+			AddTL = true ;
+			TLDir = -1 ;
+			end 
+		else if TLDir = -1 and NewSwingPrice <= SwingPrice then 
+			{ prepare to update prev dn TL }
+			begin
+			SaveSwing = true;
+			UpdateTL = true ;
+			end ;
+		end ;
+	end ;
+
+if SaveSwing then 
+	{ save new swing and reset SaveSwing }
+	begin
+	SwingPrice = NewSwingPrice ;
+	SwingDate = Date[1] ;
+	SwingTime = Time[1] ;
+	SaveSwing = false ;
+	end ;
+
+if AddTL then 
+	{ add new TL and reset AddTL }
+	begin
+	TLRef = TL_New( SwingDate, SwingTime, SwingPrice, SwingDate[1], SwingTime[1], 
+	 SwingPrice[1] ) ;
+	TL_SetExtLeft( TLRef, false ) ;
+	TL_SetExtRight( TLRef, false ) ;
+	TL_SetSize( TLRef, LineWidth ) ;
+	TL_SetColor( TLRef, LineColor ) ;
+	AddTL = false ;
+	end 
+else if UpdateTL then 
+	{ update prev TL and reset UpdateTL }
+	begin
+	TL_SetEnd( TLRef, SwingDate, SwingTime, SwingPrice ) ;
+	UpdateTL = false ;
+	end ;
+
+
+{ ** Copyright © TradeStation Technologies, Inc.  All Rights Reserved ** 
+  ** TradeStation reserves the right to modify or overwrite this analysis technique 
+     with each release. ** }
+
